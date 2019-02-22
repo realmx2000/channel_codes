@@ -29,13 +29,14 @@ class AWGN(BaseChannel):
         self.SNR = SNR
         self.name += "AWGN"
 
-    def apply_input_power_constraint(self):
-        
+    def apply_input_power_constraint(self, x):
+        mean, variance = tf.nn.moments(x)
+        return (x - mean) / tf.sqrt(variance)
 
     def apply_noise(self, x):
         # Find way to compute variance
-        var = 0.1
-        noisy = x + tf.random.normal(x.shape)
+        std = np.sqrt(self.P / self.SNR)
+        noisy = x + tf.random.normal(x.shape, stddev=std)
         return noisy
 
     def grad(self, op, grad):
