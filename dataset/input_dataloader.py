@@ -18,3 +18,4 @@ class InputDataloader(object):
         loader = tf.data.Dataset.batch(self.batch_size).from_generator(self.example_generator,
                                                                        tf.int64, tf.TensorShape([None]))
         return loader
+        
