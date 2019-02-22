@@ -2,7 +2,9 @@ import argparse
 
 class ArgParser(object):
     def __init__(self):
-        self.parser = argparse.ArgumentParser("Run channel codes project.")
+        self.parser = argparse.ArgumentParser("Run channel codes project to learn convolutional code.")
+        self.parser.add_argument("--gpu", action='store_true')
+        self.parser.add_argument("--rate", default=0.5, type=float, help="Communication rate")
         self.parser.add_argument("--batch_size", default=1000, type=int, help="Batch size.")
         self.parser.add_argument("--block_length", default=100, type=int, help="Block length for inputs.")
         self.parser.add_argument("--SNR", required=True, type=float, help="Channel SNR.")

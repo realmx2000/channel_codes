@@ -12,7 +12,7 @@ class InputDataloader(object):
     def example_generator(self):
         for _ in range(self.num_examples):
             example = np.random.randint(0, 2, size=self.block_length)
-            yield example
+            yield np.expand_dims(example, 2)
 
     def get_loader(self):
         loader = tf.data.Dataset.batch(self.batch_size).from_generator(self.example_generator,
