@@ -1,6 +1,6 @@
 import tensorflow as tf
 from dataset import InputDataloader
-from args import ArgParser
+from args import TrainArgParser
 from models import Encoder
 
 
@@ -13,18 +13,18 @@ def train(args):
     logger_args = args.logger_args
 
     num_examples = data_args.num_epochs * data_args.batches_per_epoch * data_args.batch_size
-	loader = InputDataloader(data_args.batch_size, data_args.block_length, num_examples, True)
+    loader = InputDataloader(data_args.batch_size, data_args.block_length, num_examples, True)
 
-	it = loader.get_loader()
-	next = it.get_next()
-	sess = tf.Session()
-	encoder = Encoder(100, 25, 2, 1/2, False)
-	sess.run(tf.global_variables_initializer())
-	sess.run(tf.local_variables_initializer())
-	for i in range(100):
-	    val = sess.run(encoder.forward(next))
-	    print(val)
-	    input()
+    it = loader.get_loader()
+    next = it.get_next()
+    sess = tf.Session()
+    encoder = Encoder(100, 25, 2, 1/2, False)
+    sess.run(tf.global_variables_initializer())
+    sess.run(tf.local_variables_initializer())
+    for i in range(100):
+        val = sess.run(encoder.forward(next))
+        print(val)
+        input()
 
 if __name__ == '__main__':
     parser = TrainArgParser()

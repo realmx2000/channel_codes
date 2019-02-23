@@ -29,10 +29,7 @@ class BaseArgParser(object):
         self.is_training = False
 
 
-    def parse_args(self):
-        return self.parser.parse_args()
-
-@staticmethod
+    @staticmethod
     def fix_nested_namespaces(args):
         """Make sure that nested namespaces work.
         Args:
@@ -53,3 +50,9 @@ class BaseArgParser(object):
 
             args.__dict__[group].__dict__[name] = args.__dict__[key]
             del args.__dict__[key]
+
+
+    def parse_args(self):
+        args = self.parser.parse_args()
+        self.fix_nested_namespaces(args)
+        return args
