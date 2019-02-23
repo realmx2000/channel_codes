@@ -23,9 +23,8 @@ class BaseChannel(object):
 
 class AWGN(BaseChannel):
     """Generates noise"""
-    def __init__(self, SNR, max_input_power):
+    def __init__(self, SNR):
         super().__init__()
-        self.P = max_input_power
         self.SNR = SNR
         self.name += "AWGN"
 
@@ -35,7 +34,7 @@ class AWGN(BaseChannel):
 
     def apply_noise(self, x):
         # Find way to compute variance
-        std = np.sqrt(self.P / self.SNR)
+        std = np.sqrt(1 / self.SNR)
         noisy = x + tf.random.normal(x.shape, stddev=std)
         return noisy
 
