@@ -11,10 +11,10 @@ class InputDataloader(object):
 
     def example_generator(self):
         for _ in range(self.num_examples):
-            example = np.random.randint(0, 2, size=self.block_length)
-            yield np.expand_dims(example, 2)
+            example = np.random.randint(0, 2, size=[self.block_length, 1])
+            yield example
 
     def get_loader(self):
-        loader = tf.data.Dataset.batch(self.batch_size).from_generator(self.example_generator,
-                                                                       tf.int64, tf.TensorShape([None]))
-        return loader
+        loader = tf.data.Dataset().from_generator(
+            self.example_generator, tf.float32, tf.TensorShape([None, 1])).batch(batch_size=self.batch_size)
+        return loader.make_one_shot_iterator()

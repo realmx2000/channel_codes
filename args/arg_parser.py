@@ -7,7 +7,7 @@ class ArgParser(object):
         self.parser.add_argument("--rate", default=0.5, type=float, help="Communication rate")
         self.parser.add_argument("--batch_size", default=1000, type=int, help="Batch size.")
         self.parser.add_argument("--block_length", default=100, type=int, help="Block length for inputs.")
-        self.parser.add_argument("--SNR", required=True, type=float, help="Channel SNR.")
+        self.parser.add_argument("--SNR", default=0, type=float, help="Channel SNR.")
         self.parser.add_argument("--lr", default=0.001, type=float, help="Learning Rate.")
         self.parser.add_argument("--batches_per_epoch", default=100, type=int, help="Number of batches in an epoch.")
         self.parser.add_argument("--num_epochs", default=240, type=int, help="Number of epochs.")
