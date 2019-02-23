@@ -25,10 +25,10 @@ class AutoEncoder:
     def get_decoder(self, block_length, num_units, num_layers, rate, gpu):
         encodings = keras.layers.Input((block_length, int(1 / rate)))
         if gpu:
-            layer1 = keras.layers.Bidirectional(keras.layers.CuDNNGRU(num_units, return_sequences=True))(inp)
+            layer1 = keras.layers.Bidirectional(keras.layers.CuDNNGRU(num_units, return_sequences=True))(encodings)
             layer2 = (keras.layers.Bidirectional(keras.layers.CuDNNGRU(num_units, return_sequences=True)))(layer1)
         else:
-            layer1 = keras.layers.Bidirectional(keras.layers.GRU(num_units, return_sequences=True))(inp)
+            layer1 = keras.layers.Bidirectional(keras.layers.GRU(num_units, return_sequences=True))(encodings)
             layer2 = keras.layers.Bidirectional(keras.layers.GRU(num_units, return_sequences=True))(layer1)
 
         decodings = keras.layers.TimeDistributed(keras.layers.Dense(1))(layer2)
