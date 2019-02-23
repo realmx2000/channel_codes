@@ -1,13 +1,27 @@
 import tensorflow as tf
 import keras
 
+### THIS FILE NO LONGER USED ###
+
 class Decoder:
-    def __init__(self, num_units, num_layers):
-        self.base_fw = [keras.layers.GRUCell(num_units, reset_after=True) for _ in range(num_layers)]
-        self.base_bw = [keras.layers.GRUCell(num_units, reset_after=True) for _ in range(num_layers)]
-        self.summarizer = keras.layers.Dense(1, activation='sigmoid')
+    def __init__(self, block_length, num_units, num_layers, rate, gpu):
+        self.block_length = block_length
+        self.num_units = num_units
+        self.rate = rate
+        self.model = keras.Sequential()
+
+        if gpu:
+            self.model.add(keras.layers.Bidirectional(keras.layers.CuDNNGRU(num_units, return_sequences=True),
+                                                                      input_shape=(block_length, int(1 / rate))))
+            self.model.add(keras.layers.Bidirectional(keras.layers.CuDNNGRU(num_units, return_sequences=True)))
+        else:
+            self.model.add(keras.layers.Bidirectional(keras.layers.GRU(num_units, return_sequences=True),
+                                                                     input_shape=(block_length, int(1 / rate))))
+            self.model.add(keras.layers.Bidirectional(keras.layers.GRU(num_units, return_sequences=True)))
+
+        self.model.add(keras.layers.TimeDistributed(keras.layers.Dense(1)))
+        self.model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
+
 
     def forward(self, x):
-        (all_states, fw_state, bw_state) = tf.contrib.rnn.stack_bidirectional_dynamic_rnn(self.base_fw, self.base_bw, x)
-        out = tf.squeeze(all_states)
-        decoded = self.summarizer(out)
+        return self.model(x)

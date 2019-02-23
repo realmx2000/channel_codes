@@ -13,6 +13,8 @@ it = loader.get_loader()
 next = it.get_next()
 sess = tf.Session()
 encoder = Encoder(100, 25, 2, 1/2, False)
+sess.run(tf.global_variables_initializer())
+sess.run(tf.local_variables_initializer())
 for i in range(100):
     val = sess.run(encoder.forward(next))
     print(val)

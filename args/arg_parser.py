@@ -25,6 +25,8 @@ class ArgParser(object):
         self.parser.add_argument("--lr_scheduler", type=str, choices=["plateau", "step"], default='plateau',
                                  help="Learning rate scheduler. 'plateau' for step on loss plateau, 'step' for fixed steps.")
         self.parser.add_argument("--decay_step", type=float, default=0.1, help="Learning rate decay step.")
+        self.parser.add_argument("--patience", type=int, default=10,
+                                 help="Number of iterations to decay learning rate after if plateau.")
 
     def parse_args(self):
         return self.parser.parse_args()
