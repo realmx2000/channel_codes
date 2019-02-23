@@ -25,7 +25,7 @@ class AWGN(BaseChannel):
 
     def apply_noise(self, x):
         # Find way to compute variance
-        std = np.sqrt(self.P / self.SNR)
+        std = np.sqrt(1 / self.SNR)
         noisy = x + tf.random.normal(x.shape, stddev=std)
         return noisy
 
