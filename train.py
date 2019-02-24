@@ -33,8 +33,7 @@ def train(args):
     num_examples = data_args.num_epochs * data_args.batches_per_epoch * data_args.batch_size
     loader = InputDataloader(data_args.batch_size, data_args.block_length, num_examples, True)
 
-    it = loader.get_loader()
-    next = it.get_next()
+    generator = loader.example_generator()
     sess = tf.Session()
     encoder = Encoder(100, 25, 2, 1/2, False)
     sess.run(tf.global_variables_initializer())

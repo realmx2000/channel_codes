@@ -1,6 +1,6 @@
 import keras
 
-def get_optimizer(optimizer, lr, scheduler, decay, momentum=0, patience=10):
+def get_optimizer(optimizer, lr, scheduler, decay, momentum=0):
     lr_decay = decay if scheduler == 'step' else 0.0
     if optimizer == 'adam':
         opt = keras.optimizers.Adam(lr=lr, decay=lr_decay)
@@ -11,10 +11,8 @@ def get_optimizer(optimizer, lr, scheduler, decay, momentum=0, patience=10):
 
     return opt
 
-def bitwise_error(pred, true):
-    # TODO: implement error
-    pass
-
-def blockwise_error(pred, true):
-    # TODO: implement error
-    pass
+def get_scheduler(scheduler, decay, patience, losses):
+    if scheduler == 'plateau':
+        return keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=decay, patience=patience, cooldown=1)
+    else:
+        print("Unsupported scheduler used.")
