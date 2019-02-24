@@ -1,1 +1,1 @@
-from .autoencoder import Encoder
+from .autoencoder import AutoEncoder
