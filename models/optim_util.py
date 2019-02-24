@@ -13,6 +13,8 @@ def get_optimizer(optimizer, lr, scheduler, decay, momentum=0, patience=10):
 
 def bitwise_error(pred, true):
     # TODO: implement error
+    pass
 
 def blockwise_error(pred, true):
     # TODO: implement error
+    pass

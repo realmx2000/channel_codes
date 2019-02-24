@@ -57,4 +57,5 @@ class AutoEncoder:
 
     def train(self, iterator, train_ratio):
         # TODO: alternating training.
+        pass
 
