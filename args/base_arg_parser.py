@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 
 
 class BaseArgParser(object):
@@ -6,6 +7,10 @@ class BaseArgParser(object):
 
     def __init__(self):
         self.parser = argparse.ArgumentParser("Run channel codes project to learn convolutional code.")
+
+        self.parser.add_argument("--model", dest='model_args.model',
+                                 type=str, default="AE",
+                                 choices=["AE", "Conv", "Turbo"])
 
         # directorys
         self.parser.add_argument("--name", dest='logger_args.name',
@@ -55,4 +60,11 @@ class BaseArgParser(object):
     def parse_args(self):
         args = self.parser.parse_args()
         self.fix_nested_namespaces(args)
+
+        # convert path strings to Path
+        save_dir = (Path(args.logger_args.save_dir) / 
+                    args.model_args.model / 
+                    args.logger_args.name)
+        save_dir.mkdir(parents=True, exist_ok=True)
+        args.logger_args.save_dir = save_dir
         return args

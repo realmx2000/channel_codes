@@ -1,7 +1,25 @@
+import argparse
+import json
+import pathlib
 import tensorflow as tf
 from dataset import InputDataloader
 from args import TrainArgParser
-from models import Encoder
+from models import AutoEncoder
+
+
+def write_args(args):
+    save_dir = args.logger_args.save_dir
+    """Save args to a JSON file."""
+    with (save_dir / 'args.json').open('w') as fh:
+        args_dict = vars(args)
+        for k, v in args_dict.items():
+            if type(v) is argparse.Namespace:
+                args_dict[k] = vars(v)
+                for k2, v2 in args_dict[k].items():
+                    if type(v2) is pathlib.PosixPath:
+                        args_dict[k][k2] = v2.as_posix()
+        json.dump(args_dict, fh, indent=4, sort_keys=True)
+        fh.write('\n')
 
 
 def train(args):
