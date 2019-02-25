@@ -57,29 +57,43 @@ def train(args):
 
     channel = AWGN(SNR, 1)
     model = AutoEncoder(model_args, data_args, channel)
-    scheduler = get_scheduler(args.scheduler, args.decay, args.patience)
-    loader = InputDataloader(args.batch_size, args.block_length, args.num_examples)
+    enc_scheduler = get_scheduler(model_args.scheduler, model_args.decay, model_args.patience)
+    dec_scheduler = get_scheduler(model_args.scheduler, model_args.decay, model_args.patience)
+    enc_scheduler.set_model(model.trainable_encoder)
+    dec_scheduler.set_model(model.trainable_decoder)
+
+    dataset_size = data_args.batch_size * data_args.batches_per_epoch * data_args.num_epochs
+    loader = InputDataloader(data_args.batch_size, data_args.block_length, dataset_size)
     loader = loader.example_generator()
 
     logs = {}
     logs['loss'] = []
     logs['accuracy'] = []
+    curr_log = {}
 
-    scheduler.on_train_begin()
+    enc_scheduler.on_train_begin()
+    dec_scheduler.on_train_begin()
+    epoch = 0
     while True: # Loop until StopIteration
         try:
             metrics = None
-            for step in range(args.batches_per_epoch % (args.train_ratio + 1)):
+            for step in range(data_args.batches_per_epoch % (model_args.train_ratio + 1)):
                 msg = next(loader)
                 metrics = model.train_encoder(msg)
-                for _ in range(args.train_ratio):
+                for _ in range(model_args.train_ratio):
                     msg = next(loader)
                     metrics = model.train_decoder(msg)
-
+            print(metrics)
             logs['loss'].append(metrics[0])
             logs['accuracy'].append(metrics[1])
-            scheduler.on_epoch_end(logs=logs)
-        except:
+            curr_log['loss'] = metrics[0]
+            curr_log['accuracy'] = metrics[1]
+
+            # Should these be joint or separate?
+            enc_scheduler.on_epoch_end(epoch, logs=curr_log)
+            dec_scheduler.on_epoch_end(epoch, logs=curr_log)
+            epoch += 1
+        except StopIteration:
             break
 
 if __name__ == '__main__':

@@ -51,19 +51,19 @@ class AutoEncoder:
 
         inp = keras.layers.Input((block_length, 1))
         encodings = encoder(inp)
-        constrained = channel.apply_input_power_constraint(encodings)
-        noisy = channel.apply_noise(constrained) # This might be a problem - not a Keras layer
-        decodings = decoder(noisy)
+        #constrained = channel.apply_input_power_constraint(encodings)
+        #noisy = channel.apply_noise(constrained) # This might be a problem - not a Keras layer
+        decodings = decoder(encodings)
 
         encoder.trainable = False
         decoder.trainable = True
         self.trainable_decoder = keras.Model(inp, decodings)
-        self.trainable_decoder.compile(optimizer=opt1, loss=loss, metrics=['accuracy', loss])
+        self.trainable_decoder.compile(optimizer=opt1, loss=loss, metrics=['accuracy'])
 
         encoder.trainable = True
         decoder.trainable = False
         self.trainable_encoder = keras.Model(inp, decodings)
-        self.trainable_encoder.compile(optimizer=opt2, loss=loss, metrics=['accuracy', loss])
+        self.trainable_encoder.compile(optimizer=opt2, loss=loss, metrics=['accuracy'])
 
 
     def train_encoder(self, x):

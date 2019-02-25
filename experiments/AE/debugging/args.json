@@ -1,0 +1,30 @@
+{
+    "data_args": {
+        "SNR": 0,
+        "batch_size": 10,
+        "batches_per_epoch": 100,
+        "block_length": 100,
+        "num_epochs": 240,
+        "rate": 0.5
+    },
+    "logger_args": {
+        "name": "debugging",
+        "save_dir": "experiments/AE/debugging"
+    },
+    "model_args": {
+        "dec_size": 100,
+        "decay": 0.1,
+        "enc_size": 25,
+        "gpu": false,
+        "loss": "binary_crossentropy",
+        "lr": 0.001,
+        "md_reg": 0.001,
+        "model": "AE",
+        "momentum": 0.1,
+        "num_layers": 2,
+        "optimizer": "adam",
+        "patience": 10,
+        "scheduler": "plateau",
+        "train_ratio": 5
+    }
+}

@@ -12,7 +12,7 @@ class BaseArgParser(object):
                                  type=str, default="AE",
                                  choices=["AE", "Conv", "Turbo"])
 
-        # directorys
+        # directories
         self.parser.add_argument("--name", dest='logger_args.name',
                                  type=str, default='debugging')
         self.parser.add_argument("--save_dir", dest='logger_args.save_dir',
