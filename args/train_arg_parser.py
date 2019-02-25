@@ -30,11 +30,13 @@ class TrainArgParser(BaseArgParser):
         self.parser.add_argument("--train_ratio", dest='model_args.train_ratio',
                                  type=int, default=5,
                                  help="Number of times to train transmitter per receiver train.")
-        self.parser.add_argument("--lr_scheduler", dest='model_args.lr_scheduler',
+        self.parser.add_argument("--lr_scheduler", dest='model_args.scheduler',
                                  type=str, choices=["plateau", "step"], default='plateau',
                                  help="Learning rate scheduler. 'plateau' for step on loss plateau, 'step' for fixed steps.")
-        self.parser.add_argument("--decay_step", dest='model_args.decay_step',
+        self.parser.add_argument("--decay_step", dest='model_args.decay',
                                  type=float, default=0.1, help="Learning rate decay step.")
+        self.parser.add_argument("--momentum", default=0.1, dest='model_args.momentum', type=float,
+                                 help="Momentum to use. Nesterov optimizer only.")
         self.parser.add_argument("--patience", dest='model_args.patience',
                                  type=int, default=10,
                                  help="Number of iterations to decay learning rate after if plateau.")
@@ -42,12 +44,10 @@ class TrainArgParser(BaseArgParser):
         # architecture args
         self.parser.add_argument("--enc_size", dest='model_args.enc_size',
                                  type=int, default=25, help="Number of units in encoder.")
-        self.parser.add_argument("--enc_layers", dest='model_args.enc_layers',
-                                 type=int, default=2, help="Number of layers in encoder.")
+        self.parser.add_argument("--layers", dest='model_args.num_layers',
+                                 type=int, default=2, help="Number of layers.")
         self.parser.add_argument("--dec_size", dest='model_args.dec_size',
                                  type=int, default=100, help="Number of units in decoder.")
-        self.parser.add_argument("--dec_layers", dest='model_args.dec_layers',
-                                 type=int, default=2, help="Number of layers in decoder.")
 
     def parse_args(self):
         args = super().parse_args()

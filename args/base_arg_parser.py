@@ -29,7 +29,7 @@ class BaseArgParser(object):
                                  default=100, type=int, help="Block length for inputs.")
 
         # gpu
-        self.parser.add_argument("--gpu", action='store_true')
+        self.parser.add_argument("--gpu", action='store_true', dest='model_args.gpu')
 
         self.is_training = False
 

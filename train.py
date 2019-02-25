@@ -56,7 +56,7 @@ def train(args):
     SNR = 1/5
 
     channel = AWGN(SNR, 1)
-    model = AutoEncoder(model_args, channel)
+    model = AutoEncoder(model_args, data_args, channel)
     scheduler = get_scheduler(args.scheduler, args.decay, args.patience)
     loader = InputDataloader(args.batch_size, args.block_length, args.num_examples)
     loader = loader.example_generator()
