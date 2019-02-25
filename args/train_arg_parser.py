@@ -48,3 +48,10 @@ class TrainArgParser(BaseArgParser):
                                  type=int, default=100, help="Number of units in decoder.")
         self.parser.add_argument("--dec_layers", dest='model_args.dec_layers',
                                  type=int, default=2, help="Number of layers in decoder.")
+
+    def parse_args(self):
+        args = super().parse_args()
+        if args.loss == 'mse':
+            args.loss = 'mean_squared_error'
+        elif args.loss == 'bce':
+            args.loss = 'binary_crossentropy'

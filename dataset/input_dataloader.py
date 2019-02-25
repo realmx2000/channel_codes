@@ -3,9 +3,8 @@ import tensorflow as tf
 
 class InputDataloader(object):
     """Loads inputs"""
-    def __init__(self, batch_size, block_length, num_examples, is_training):
+    def __init__(self, batch_size, block_length, num_examples):
         self.batch_size = batch_size
-        self.is_training = is_training
         self.block_length = block_length
         self.num_examples = num_examples
 

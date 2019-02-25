@@ -7,8 +7,12 @@ class AutoEncoder:
                                          args.momentum)
         opt2= get_optimizer(args.optimizer, args.lr, args.scheduler, args.decay,
                                          args.momentum)
-        self.compile_models(args.loss, opt1, opt2, args.block_lenth, args.num_units,
+        self.scheduler = get_scheduler(args.scheduler, args.decay, args.patience)
+
+        self.compile_models(args.loss, opt1, opt2, args.block_length, args.num_units,
                             args.num_layers, args.rate, args.gpu, channel)
+
+
     def get_encoder(self, block_length, num_units, num_layers, rate, gpu):
         inp = keras.layers.Input((block_length, 1))
         if gpu:
@@ -23,6 +27,7 @@ class AutoEncoder:
         encodings = keras.layers.TimeDistributed(keras.layers.Dense(int(1 / rate)))(out)
         model = keras.Model(inp, encodings)
         return model
+
 
     def get_decoder(self, block_length, num_units, num_layers, rate, gpu):
         encodings = keras.layers.Input((block_length, int(1 / rate)))
@@ -39,6 +44,7 @@ class AutoEncoder:
         model = keras.Model(encodings, decodings)
         return model
 
+
     def compile_models(self, loss, opt1,  opt2, block_length, num_units, num_layers,
                        rate, gpu, channel):
         encoder = self.get_encoder(block_length, num_units, num_layers, rate, gpu)
@@ -46,7 +52,8 @@ class AutoEncoder:
 
         inp = keras.layers.Input((block_length, 1))
         encodings = encoder(inp)
-        noisy = channel.apply_noise(encodings) # This might be a problem - not a Keras layer
+        constrained = channel.apply_input_power_constraint(encodings)
+        noisy = channel.apply_noise(constrained) # This might be a problem - not a Keras layer
         decodings = decoder(noisy)
 
         encoder.trainable = False
@@ -59,26 +66,11 @@ class AutoEncoder:
         self.trainable_encoder = keras.Model(inp, decodings)
         self.trainable_encoder.compile(optimizer=opt2, loss=loss, metrics=['accuracy', loss])
 
-    def train(self, data_generator, train_ratio, it_per_epoch):
-        scheduler = get_scheduler()
-        logs = {}
-        logs['loss'] = []
-        logs['accuracy'] = []
 
-        scheduler.on_train_begin()
-        while True:
-            try:
-                loss = None
-                for step in range(it_per_epoch % (train_ratio + 1)):
-                    msg = next(data_generator)
-                    loss = self.trainable_encoder.train_on_batch(msg, msg)
-                    for _ in range(train_ratio):
-                        msg = next(data_generator)
-                        loss = self.trainable_decoder.train_on_batch(msg, msg)
+    def train_encoder(self, x):
+        metrics = self.trainable_encoder.train_on_batch(x, x)
+        return metrics
 
-                logs['loss'].append(loss[0])
-                logs['accuracy'].append(loss[1])
-                scheduler.on_epoch_end(logs=logs)
-            except:
-                break
-        return logs
+    def train_decoder(self, x):
+        metrics = self.trainable_decoder.train_on_batch(x, x)
+        return metrics

@@ -2,9 +2,9 @@ import argparse
 import json
 import pathlib
 import tensorflow as tf
-from dataset import InputDataloader
+from dataset import InputDataloader, AWGN
 from args import TrainArgParser
-from models import AutoEncoder
+from models import AutoEncoder, get_scheduler
 
 
 def write_args(args):
@@ -21,9 +21,8 @@ def write_args(args):
         json.dump(args_dict, fh, indent=4, sort_keys=True)
         fh.write('\n')
 
-
+"""
 def train(args):
-    """Train the model on the dataset."""
     write_args(args)
 
     model_args = args.model_args
@@ -42,28 +41,40 @@ def train(args):
         val = sess.run(encoder.forward(next))
         print(val)
         input()
+"""
+
+def train(args):
+    SNR = 1/5
+
+    channel = AWGN(SNR, 1)
+    model = AutoEncoder(args, channel)
+    scheduler = get_scheduler(args.scheduler, args.decay, args.patience)
+    loader = InputDataloader(args.batch_size, args.block_length, args.num_examples)
+    loader = loader.example_generator()
+
+    logs = {}
+    logs['loss'] = []
+    logs['accuracy'] = []
+
+    scheduler.on_train_begin()
+    while True: # Loop until StopIteration
+        try:
+            metrics = None
+            for step in range(args.batches_per_epoch % (args.train_ratio + 1)):
+                msg = next(loader)
+                metrics = model.train_encoder(msg)
+                for _ in range(args.train_ratio):
+                    msg = next(loader)
+                    metrics = model.train_decoder(msg)
+
+            logs['loss'].append(metrics[0])
+            logs['accuracy'].append(metrics[1])
+            scheduler.on_epoch_end(logs=logs)
+        except:
+            break
 
 if __name__ == '__main__':
     parser = TrainArgParser()
     train(parser.parse_args())
 
-"""
-SNR = 1/5
 
-channel = AWGN(SNR)
-
-tf.reset_default_graph()
-x = tf.placeholder(tf.float32, [None, args.block_length])
-channel_in = encoder(x)
-channel = channel.apply_input_power_constraint(channel_in)
-channel_out = channel.apply_noise(channel)
-y = decoder(channel_out)
-loss = tf.nn.sigmoid_cross_entropy_with_logits(x, y)
-
-with tf.Session() as sess:
-    sess.run(tf.global_variables_initializer())
-    # train decoder
-    for i, message in enumerate(loader):
-        feed_dict = {x: message}
-        loss_np = sess.run(loss, feed_dict=feed_dict)
-"""
