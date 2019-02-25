@@ -51,7 +51,9 @@ class TrainArgParser(BaseArgParser):
 
     def parse_args(self):
         args = super().parse_args()
-        if args.loss == 'mse':
-            args.loss = 'mean_squared_error'
-        elif args.loss == 'bce':
-            args.loss = 'binary_crossentropy'
+        if args.model_args.loss == 'mse':
+            args.model_args.loss = 'mean_squared_error'
+        elif args.model_args.loss == 'bce':
+            args.model_args.loss = 'binary_crossentropy'
+
+        return args

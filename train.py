@@ -1,4 +1,5 @@
 import argparse
+import copy
 import json
 import pathlib
 import tensorflow as tf
@@ -9,9 +10,10 @@ from models import AutoEncoder, get_scheduler
 
 def write_args(args):
     save_dir = args.logger_args.save_dir
+    copy_args = copy.deepcopy(args)
     """Save args to a JSON file."""
     with (save_dir / 'args.json').open('w') as fh:
-        args_dict = vars(args)
+        args_dict = vars(copy_args)
         for k, v in args_dict.items():
             if type(v) is argparse.Namespace:
                 args_dict[k] = vars(v)
@@ -44,10 +46,17 @@ def train(args):
 """
 
 def train(args):
+
+    write_args(args)
+
+    model_args = args.model_args
+    data_args = args.data_args
+    logger_args = args.logger_args
+
     SNR = 1/5
 
     channel = AWGN(SNR, 1)
-    model = AutoEncoder(args, channel)
+    model = AutoEncoder(model_args, channel)
     scheduler = get_scheduler(args.scheduler, args.decay, args.patience)
     loader = InputDataloader(args.batch_size, args.block_length, args.num_examples)
     loader = loader.example_generator()
@@ -76,5 +85,3 @@ def train(args):
 if __name__ == '__main__':
     parser = TrainArgParser()
     train(parser.parse_args())
-
-
