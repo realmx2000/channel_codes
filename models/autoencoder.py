@@ -68,14 +68,19 @@ class AutoEncoder:
 
     def train_encoder(self, x):
         metrics = self.trainable_encoder.train_on_batch(x, x)
-        # want to return a dictionary
+        # return a dictionary
         metrics = {
-            'loss': metrics[0],
-            'accuracy': metrics[1]
+            'enc_loss': metrics[0],
+            'enc_accuracy': metrics[1]
         }
         return metrics
 
 
     def train_decoder(self, x):
         metrics = self.trainable_decoder.train_on_batch(x, x)
+        # return a dictionary
+        metrics = {
+            'dec_loss': metrics[0],
+            'dec_accuracy': metrics[1]
+        }
         return metrics

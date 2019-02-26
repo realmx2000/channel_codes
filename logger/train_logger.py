@@ -2,17 +2,29 @@ import numpy as np
 import os
 from time import time
 
+from datetime import datetime
+from tensorboardX import SummaryWriter
+
 
 class TrainLogger(object):
-    def __init__(self, save_dir, name, num_epochs, batches_per_epoch, iters_per_print):
+    def __init__(self, save_dir, name, num_epochs, iters_per_print):
         self.save_dir = save_dir
         self.name = name
         self.num_epochs = num_epochs
-        self.batches_per_epoch = batches_per_epoch
         self.iters_per_print = iters_per_print
         self.log_path = os.path.join(self.save_dir, '{}.log'.format(self.name))
+        log_dir = os.path.join('logs', name + '_' + datetime.now().strftime('%b%d_%H%M'))
+        self.summary_writer = SummaryWriter(log_dir=log_dir)
 
-        self.epochs = 0
+        self.epoch = 0
+        self.global_step = 0
+
+        self.curr_metrics = {
+            'enc_loss': np.nan,
+            'enc_accuracy': np.nan,
+            'dec_loss': np.nan,
+            'dec_accuracy': np.nan
+        }
 
 
     def _log_scalars(self, scalar_dict, print_to_stdout=True):
@@ -39,21 +51,29 @@ class TrainLogger(object):
 
     def log_iter(self, metrics):
         """Log results from a training iteration"""
+        # update current metrics
+        for k, v in metrics.items():
+            self.curr_metrics[k] = v
+
         if self.iter % self.iters_per_print == 0:
-            
-            time = (time() - self.iter_start_time)
-            message = '[epoch: {}, iter: {} / {}, time: {:.2f}, loss: {:.3g}, accuracy {:3g}]' \
-                .format(self.epoch, self.iter, self.batches_per_epoch, time, metrics['loss'], metrics['accuracy'])
+
+            avg_time = time() - self.iter_start_time
+            message = '[epoch: {}, iter: {}, time: {:.2f}, encoder loss: {:.3g}, encoder accuracy {:3g}, dencoder loss: {:.3g}, dencoder accuracy {:3g}]' \
+                .format(self.epoch, self.iter, avg_time, 
+                        self.curr_metrics['enc_loss'], 
+                        self.curr_metrics['enc_accuracy'],
+                        self.curr_metrics['dec_loss'],
+                        self.curr_metrics['dec_accuracy'])
 
             self.write(message)
 
-            self._log_scalars(metrics)
+            self._log_scalars(metrics, False)
 
 
-
-   def end_iter(self):
+    def end_iter(self):
         """Log info for end of an iteration."""
         self.iter += 1
+        self.global_step += 1
 
 
     def start_epoch(self):
@@ -70,7 +90,7 @@ class TrainLogger(object):
             optimizer: Optimizer for the model.
         """
         #TODO: record lr
-        self.write('[end of epoch {}, epoch time: {:.2g}, lr: {}]'
+        self.write('[end of epoch {}, epoch time: {:.2g}]'
                    .format(self.epoch, time() - self.epoch_start_time))
         if metrics is not None:
             self._log_scalars(metrics)

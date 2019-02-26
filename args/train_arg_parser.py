@@ -14,6 +14,10 @@ class TrainArgParser(BaseArgParser):
         self.parser.add_argument("--num_epochs", dest='data_args.num_epochs',
                                  default=240, type=int, help="Number of epochs.")
 
+        # logger args
+        self.parser.add_argument("--iters_per_print", dest='logger_args.iters_per_print',
+                                 default=10, type=int, help="Number of iters till print")
+
         # loss args
         self.parser.add_argument("--loss", choices=["mse", "bce"], dest='model_args.loss',
                                  type=str, default="bce",
