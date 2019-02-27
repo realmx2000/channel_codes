@@ -76,8 +76,8 @@ def train(args):
 
             # Should these be joint or separate?
             # TODO: debug this part
-            enc_scheduler.on_epoch_end(epoch, logs=curr_log)
-            dec_scheduler.on_epoch_end(epoch, logs=curr_log)
+            enc_scheduler.on_epoch_end(logger.epoch, logs=metrics)
+            dec_scheduler.on_epoch_end(logger.epoch, logs=metrics)
         except StopIteration:
             break
 

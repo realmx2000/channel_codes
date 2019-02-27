@@ -19,12 +19,9 @@ class TrainLogger(object):
         self.epoch = 0
         self.global_step = 0
 
-        self.curr_metrics = {
-            'enc_loss': np.nan,
-            'enc_accuracy': np.nan,
-            'dec_loss': np.nan,
-            'dec_accuracy': np.nan
-        }
+        self.metric_logs = {}
+        self.metric_logs['loss'] = []
+        self.metric_logs['accuracy'] = []
 
 
     def _log_scalars(self, scalar_dict, print_to_stdout=True):
@@ -34,6 +31,8 @@ class TrainLogger(object):
                 self.write('[{}: {:.3g}]'.format(k, v))
             k = k.replace('_', '/')  # Group in TensorBoard by phase
             self.summary_writer.add_scalar(k, v, self.global_step) 
+
+            self.metric_logs[k].append(v)
 
         
     def write(self, message, print_to_stdout=True):
@@ -51,23 +50,17 @@ class TrainLogger(object):
 
     def log_iter(self, metrics):
         """Log results from a training iteration"""
-        # update current metrics
-        for k, v in metrics.items():
-            self.curr_metrics[k] = v
-
         if self.iter % self.iters_per_print == 0:
 
             avg_time = time() - self.iter_start_time
-            message = '[epoch: {}, iter: {}, time: {:.2f}, encoder loss: {:.3g}, encoder accuracy {:3g}, dencoder loss: {:.3g}, dencoder accuracy {:3g}]' \
+            message = '[epoch: {}, iter: {}, time: {:.2f}, loss: {:.3g}, accuracy {:3g}]' \
                 .format(self.epoch, self.iter, avg_time, 
-                        self.curr_metrics['enc_loss'], 
-                        self.curr_metrics['enc_accuracy'],
-                        self.curr_metrics['dec_loss'],
-                        self.curr_metrics['dec_accuracy'])
+                        metrics['loss'],
+                        metrics['accuracy'])
 
             self.write(message)
 
-            self._log_scalars(metrics, False)
+        self._log_scalars(metrics, False)
 
 
     def end_iter(self):
