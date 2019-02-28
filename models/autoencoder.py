@@ -49,10 +49,14 @@ class AutoEncoder:
         encoder = self.get_encoder(block_length, enc_size, num_layers, rate, gpu)
         decoder = self.get_decoder(block_length, dec_size, num_layers, rate, gpu)
 
+        print ("bl_s", block_length)
+        print ('enc_size', enc_size)
+        print ('dec_size', dec_size)
         inp = keras.layers.Input((block_length, 1))
         encodings = encoder(inp)
-        #constrained = channel.apply_input_power_constraint(encodings)
-        #noisy = channel.apply_noise(constrained) # This might be a problem - not a Keras layer
+        constrained = channel.apply_input_power_constraint(encodings)
+        # I think should be fine even though not Keras since we compile it into a Keras layer
+        noisy = channel.apply_noise(constrained)
         decodings = decoder(encodings)
 
         encoder.trainable = False
