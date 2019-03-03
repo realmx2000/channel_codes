@@ -3,7 +3,7 @@ import copy
 import json
 import pathlib
 import numpy as np
-from dataset import InputDataloader, AWGN
+from dataset import InputDataloader, PowerConstraint
 from logger import TrainLogger
 from args import TrainArgParser
 from models import AutoEncoder, get_scheduler
@@ -37,23 +37,20 @@ def train(args):
     data_args = args.data_args
     logger_args = args.logger_args
 
-    SNR = 5
-
-    channel = AWGN(SNR, 1)
+    power_constraint = PowerConstraint()
     possible_inputs = get_md_set(model_args.md_len)
-    model = AutoEncoder(model_args, data_args, channel, possible_inputs)
+    model = AutoEncoder(model_args, data_args, power_constraint, possible_inputs)
     enc_scheduler = get_scheduler(model_args.scheduler, model_args.decay, model_args.patience)
     dec_scheduler = get_scheduler(model_args.scheduler, model_args.decay, model_args.patience)
+    
     enc_scheduler.set_model(model.trainable_encoder)
     dec_scheduler.set_model(model.trainable_decoder)
-
     dataset_size = data_args.batch_size * data_args.batches_per_epoch * data_args.num_epochs
     loader = InputDataloader(data_args.batch_size, data_args.block_length, dataset_size)
     loader = loader.example_generator()
-
     logger = TrainLogger(logger_args.save_dir, logger_args.name,
                          data_args.num_epochs, logger_args.iters_per_print)
-  
+    
     enc_scheduler.on_train_begin()
     dec_scheduler.on_train_begin()
 

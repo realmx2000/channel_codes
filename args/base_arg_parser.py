@@ -20,7 +20,7 @@ class BaseArgParser(object):
 
         # data args
         self.parser.add_argument("--SNR", dest='data_args.SNR',
-                                 default=0, type=float, help="Channel SNR.")
+                                 default=5, type=float, help="Channel SNR.")
         self.parser.add_argument("--rate", dest='data_args.rate',
                                  default=0.5, type=float, help="Communication rate")
         self.parser.add_argument("--batch_size", dest='data_args.batch_size',

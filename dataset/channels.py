@@ -1,36 +1,17 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import Lambda
+import tensorflow.keras as K
+from tensorflow.keras.layers import Layer
+# from tensorflow.keras.layers.normalization import BatchNormalization 
 
-class BaseChannel(object):
-    def __init__(self):
-        self.name = "channel_"
-
-    def apply_noise(self, x):
-        pass
-
-    def apply_input_power_constraint(self, x):
-        pass
-
-class AWGN(BaseChannel):
-    """Generates noise"""
-    def __init__(self, SNR, max_input_power):
-        super().__init__()
-        self.P = max_input_power
-        self.SNR = SNR
-        self.name += "AWGN"
-
-    def apply_input_power_constraint(self, x):
-        mean, variance = tf.nn.moments(x, [1,2])
-        return (x - mean) / tf.sqrt(variance)
-
-    def apply_noise(self, x):
-        std = np.sqrt(1 / self.SNR)
-        noisy = x + tf.random.normal(tf.shape(x), stddev=std)
-        return noisy
-
-    def apply_power_constraint_tf(self, x):
-        return Lambda(self.apply_input_power_constraint)(x)
-
-    def apply_noise_tf(self, x):
-        return Lambda(self.apply_noise)(x)
+class PowerConstraint(Layer):
+    def __init__(self, **kwargs):
+        super(PowerConstraint, self).__init__(**kwargs)
+    def build(self, input_shape):
+        super(PowerConstraint, self).build(input_shape)
+    def call(self, x):
+        mean = K.backend.mean(x, axis=[1,2], keepdims=True)
+        std = K.backend.std(x, axis=[1,2], keepdims=True)
+        return (x - mean) / std
+    def compute_output_shape(self, input_shape):
+        return input_shape

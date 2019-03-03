@@ -1,2 +1,2 @@
 from .input_dataloader import InputDataloader
-from .channels import AWGN
+from .channels import PowerConstraint

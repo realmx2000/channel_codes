@@ -1,8 +1,11 @@
 import tensorflow.keras as keras
+from tensorflow.keras.layers import GaussianNoise
+import numpy as np
 from .optim_util import get_optimizer, loss_wrapper
 
 class AutoEncoder:
-    def __init__(self, model_args, data_args, channel, possible_inputs):
+    def __init__(self, model_args, data_args, power_constraint, possible_inputs):
+        print (data_args)
         opt1= get_optimizer(model_args.optimizer, model_args.lr, model_args.scheduler, model_args.decay,
                             model_args.momentum)
         opt2= get_optimizer(model_args.optimizer, model_args.lr, model_args.scheduler, model_args.decay,
@@ -10,7 +13,11 @@ class AutoEncoder:
 
         self.compile_models(model_args.loss, opt1, opt2, data_args.batch_size, data_args.block_length,
                             model_args.enc_size, model_args.dec_size, model_args.num_layers, data_args.rate,
-                            model_args.gpu, channel, model_args.md_reg, possible_inputs)
+                            model_args.gpu, power_constraint, data_args.SNR, model_args.md_reg, possible_inputs)
+
+    def get_channel(self, snr):
+        std = np.sqrt(1. / snr)
+        return GaussianNoise(std)
 
 
     def get_encoder(self, block_length, enc_size, num_layers, rate, gpu):
@@ -46,15 +53,16 @@ class AutoEncoder:
 
 
     def compile_models(self, loss, opt1, opt2, batch_size, block_length, enc_size, dec_size, num_layers,
-                       rate, gpu, channel, reg, poss_inputs):
+                       rate, gpu, power_constraint, SNR, reg, poss_inputs):
         encoder = self.get_encoder(block_length, enc_size, num_layers, rate, gpu)
         decoder = self.get_decoder(block_length, dec_size, num_layers, rate, gpu)
+        channel = self.get_channel(SNR)
 
         inp = keras.layers.Input((block_length, 1))
         encodings = encoder(inp)
-        constrained = channel.apply_power_constraint_tf(encodings)
+        constrained = power_constraint(encodings)
         # I think should be fine even though not Keras since we compile it into a Keras layer
-        noisy = channel.apply_noise_tf(constrained)
+        noisy = channel(constrained)
         decodings = decoder(noisy)
 
         encoder.trainable = False
