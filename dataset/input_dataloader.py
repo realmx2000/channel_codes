@@ -1,5 +1,4 @@
 import numpy as np
-import tensorflow as tf
 
 class InputDataloader(object):
     """Loads inputs"""

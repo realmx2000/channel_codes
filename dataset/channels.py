@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+from tensorflow.keras.layers import Lambda
 
 class BaseChannel(object):
     def __init__(self):
@@ -8,7 +9,7 @@ class BaseChannel(object):
     def apply_noise(self, x):
         pass
 
-    def grad(self, op, grad):
+    def apply_input_power_constraint(self, x):
         pass
 
 class AWGN(BaseChannel):
@@ -28,5 +29,8 @@ class AWGN(BaseChannel):
         noisy = x + tf.random.normal(tf.shape(x), stddev=std)
         return noisy
 
-    def grad(self, op, grad):
-        return grad
+    def apply_power_constraint_tf(self, x):
+        return Lambda(self.apply_input_power_constraint)(x)
+
+    def apply_noise_tf(self, x):
+        return Lambda(self.apply_noise)(x)

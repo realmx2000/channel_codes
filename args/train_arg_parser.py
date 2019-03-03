@@ -31,6 +31,8 @@ class TrainArgParser(BaseArgParser):
                                  help="Optimizer to use. One of 'adam', 'nesterov', or 'sgd'.")
         self.parser.add_argument("--md_reg", dest='model_args.md_reg',
                                  type=float, default=0.001, help="Weight of minimum distance regularizer.")
+        self.parser.add_argument("--md_len", dest='model_args.md_len',
+                                 type=int, default=10, help="Block length for minimum distance regularizer.")
         self.parser.add_argument("--train_ratio", dest='model_args.train_ratio',
                                  type=int, default=5,
                                  help="Number of times to train transmitter per receiver train.")

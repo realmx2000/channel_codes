@@ -2,11 +2,12 @@ import argparse
 import copy
 import json
 import pathlib
-import tensorflow as tf
+import numpy as np
 from dataset import InputDataloader, AWGN
 from logger import TrainLogger
 from args import TrainArgParser
 from models import AutoEncoder, get_scheduler
+from models.optim_util import get_possible_inputs
 
 
 def write_args(args):
@@ -23,20 +24,24 @@ def write_args(args):
                         args_dict[k][k2] = v2.as_posix()
         json.dump(args_dict, fh, indent=4, sort_keys=True)
         fh.write('\n')
-        
+
+def get_md_set(md_len):
+    possible_inputs = get_possible_inputs(md_len)
+    possible_inputs = np.expand_dims(np.stack(possible_inputs, axis=0), axis=2)
+    return possible_inputs
 
 def train(args):
-
     write_args(args)
 
     model_args = args.model_args
     data_args = args.data_args
     logger_args = args.logger_args
 
-    SNR = 1/5
+    SNR = 5
 
     channel = AWGN(SNR, 1)
-    model = AutoEncoder(model_args, data_args, channel)
+    possible_inputs = get_md_set(model_args.md_len)
+    model = AutoEncoder(model_args, data_args, channel, possible_inputs)
     enc_scheduler = get_scheduler(model_args.scheduler, model_args.decay, model_args.patience)
     dec_scheduler = get_scheduler(model_args.scheduler, model_args.decay, model_args.patience)
     enc_scheduler.set_model(model.trainable_encoder)
@@ -56,8 +61,7 @@ def train(args):
         try:
             metrics = None
             logger.start_epoch()
-            for step in range(data_args.batches_per_epoch % (model_args.train_ratio + 1)):
-                
+            for step in range(data_args.batches_per_epoch // (model_args.train_ratio + 1)):
                 # encoder train
                 logger.start_iter()
                 msg = next(loader)

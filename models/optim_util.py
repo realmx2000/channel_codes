@@ -1,4 +1,6 @@
 import tensorflow.keras as keras
+import tensorflow.keras.backend as K
+import numpy as np
 
 def get_optimizer(optimizer, lr, scheduler, decay, momentum=0):
     lr_decay = decay if scheduler == 'step' else 0.0
@@ -16,3 +18,52 @@ def get_scheduler(scheduler, decay, patience):
         return keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=decay, patience=patience, cooldown=1)
     else:
         print("Unsupported scheduler used.")
+
+def get_possible_inputs(L):
+    if L == 0:
+        return [np.zeros((0), dtype=float)]
+
+    inputs = get_possible_inputs(L - 1)
+    new_inputs = []
+    for vec in inputs:
+        new_inputs.append(np.append(vec, 0))
+        new_inputs.append(np.append(vec, 1))
+    return new_inputs
+
+def loss_wrapper(loss, model, inputs, lamb, batch_size):
+    def loss_fn(y_true, y_pred):
+        loss_val = None
+        if loss == 'binary_crossentropy':
+            loss_val = keras.losses.binary_crossentropy(y_true, y_pred)
+        elif loss == 'mean_squared_error':
+            loss_val = keras.losses.mean_squared_error(y_true, y_pred)
+        loss_val += lamb * md_regularization(model, inputs, batch_size)
+        return loss_val
+    return loss_fn
+
+"""
+def loss_fn(loss, model, inputs, lamb, y_true, y_pred, batch_size):
+    loss_val = None
+    if loss == 'binary_crossentropy':
+        loss_val = keras.losses.binary_crossentropy(y_true, y_pred)
+    elif loss == 'mean_squared_error':
+        loss_val = keras.losses.mean_squared_error(y_true, y_pred)
+    loss_val += lamb * md_regularization(model, inputs, batch_size)
+    return loss_val
+"""
+
+def md_regularization(model, inputs, batch_size):
+    encodings = model.predict(inputs, batch_size=batch_size)
+    min_dist = 0
+    init = False
+    for i in range(encodings.shape[0]):
+        for j in range(i+1, encodings.shape[0]):
+            out1 = encodings[i,:]
+            out2 = encodings[j,:]
+            dist = K.sum(K.square(out1 - out2))
+            if not init :
+                min_dist = dist
+                init = True
+            else:
+                min_dist = K.minimum(min_dist, dist)
+    return min_dist
