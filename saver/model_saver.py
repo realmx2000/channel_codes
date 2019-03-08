@@ -1,4 +1,5 @@
-import pickle
+from keras.models import load_model
+
 
 class ModelSaver(object):
     """Class to save tensorflow sessions"""
@@ -15,5 +16,6 @@ class ModelSaver(object):
         self.logger.write(f"Saved model to: {self.model_save_dir}")
 
 
-    def load(self, sess):
-        self.saver.load(sess, self.model_save_dir)
+    def load(self, model):
+        model.trainable_encoder.load_weights(str(self.model_save_dir / "encoder.h5"))
+        model.trainable_decoder.load_weights(str(self.model_save_dir / "decoder.h5"))
