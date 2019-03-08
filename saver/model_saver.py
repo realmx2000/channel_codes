@@ -12,7 +12,7 @@ class ModelSaver(object):
     def save(self, model):
         model.trainable_encoder.save(self.model_save_dir / "encoder.h5")
         model.trainable_decoder.save(self.model_save_dir / "decoder.h5")
-        logger.write(f"Saved model to: {self.model_save_dir}")
+        self.logger.write(f"Saved model to: {self.model_save_dir}")
 
 
     def load(self, sess):

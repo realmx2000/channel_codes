@@ -8,6 +8,7 @@ from logger import TrainLogger
 from args import TrainArgParser
 from models import AutoEncoder, get_scheduler
 from models.optim_util import get_possible_inputs
+from saver import ModelSaver
 
 
 def write_args(args):
@@ -50,6 +51,8 @@ def train(args):
     loader = loader.example_generator()
     logger = TrainLogger(logger_args.save_dir, logger_args.name,
                          data_args.num_epochs, logger_args.iters_per_print)
+
+    saver = ModelSaver(logger_args.save_dir, logger)
     
     enc_scheduler.on_train_begin()
     dec_scheduler.on_train_begin()
@@ -79,6 +82,12 @@ def train(args):
             # TODO: debug this part
             enc_scheduler.on_epoch_end(logger.epoch, logs=metrics)
             dec_scheduler.on_epoch_end(logger.epoch, logs=metrics)
+
+            if logger.has_improved():
+                saver.save(model)
+
+            if logger.notImprovedCounter >= 5:
+                break
         except StopIteration:
             break
 

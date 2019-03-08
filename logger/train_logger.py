@@ -1,9 +1,12 @@
 import numpy as np
 import os
+import sys
 from time import time
 
 from datetime import datetime
 from tensorboardX import SummaryWriter
+
+from .average_meter import AverageMeter
 
 
 class TrainLogger(object):
@@ -22,6 +25,11 @@ class TrainLogger(object):
         self.metric_logs = {}
         self.metric_logs['loss'] = []
         self.metric_logs['accuracy'] = []
+
+        self.best_loss = sys.maxsize
+        self.loss_meter = AverageMeter()
+
+        self.notImprovedCounter = 0
 
 
     def _log_scalars(self, scalar_dict, print_to_stdout=True):
@@ -46,6 +54,7 @@ class TrainLogger(object):
     def start_iter(self):
         """Log info for start of an iteration."""
         self.iter_start_time = time()
+        self.loss_meter.reset()
 
 
     def log_iter(self, metrics):
@@ -61,6 +70,8 @@ class TrainLogger(object):
             self.write(message)
 
         self._log_scalars(metrics, False)
+
+        self.loss_meter.update(metrics['loss'])
 
 
     def end_iter(self):
@@ -83,12 +94,25 @@ class TrainLogger(object):
             optimizer: Optimizer for the model.
         """
         #TODO: record lr
-        self.write('[end of epoch {}, epoch time: {:.2g}]'
-                   .format(self.epoch, time() - self.epoch_start_time))
+        self.write('[end of epoch {}, epoch time: {:.2g}, average epoch loss: {:.3g}, best epoch loss: {:.3g}, not Improved for {} epochs]'
+                   .format(self.epoch, time() - self.epoch_start_time, self.loss_meter.avg, self.best_loss, self.notImprovedCounter))
         if metrics is not None:
             self._log_scalars(metrics)
 
         self.epoch += 1
+
+    
+    def has_improved(self):
+        """Reports whether this epochs loss has improved since the last"""
+        last_epoch_loss = self.loss_meter.avg
+        isBetter = last_epoch_loss < self.best_loss
+        if isBetter:
+            self.best_loss = last_epoch_loss
+            self.notImprovedCounter = 0
+        else:
+            self.notImprovedCounter += 1
+
+        return last_epoch_loss
 
     def is_finished_training(self):
         """Return True if finished training, otherwise return False."""
