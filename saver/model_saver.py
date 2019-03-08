@@ -1,19 +1,18 @@
-import tensorflow as tf
-from tf.train import Saver
-
+import pickle
 
 class ModelSaver(object):
     """Class to save tensorflow sessions"""
 
     def __init__(self, save_dir, logger):
         """Init saver/loader"""
-        self.model_save_dir = save_dir / "model.ckpt"
+        self.model_save_dir = save_dir
         self.logger = logger
-        self.saver = Saver()
 
 
-    def save(self, sess):
-        self.saver.save(sess, self.model_save_dir)
+    def save(self, model):
+        model.trainable_encoder.save(self.model_save_dir / "encoder.h5")
+        model.trainable_decoder.save(self.model_save_dir / "decoder.h5")
+        logger.write(f"Saved model to: {self.model_save_dir}")
 
 
     def load(self, sess):
