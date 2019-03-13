@@ -11,6 +11,10 @@ class BaseArgParser(object):
         self.parser.add_argument("--model", dest='model_args.model',
                                  type=str, default="AE",
                                  choices=["AE", "Conv", "Turbo"])
+        self.parser.add_argument("--modelfree", dest='model_args.modelfree', action='store_true',
+                                 help="Use model free training.")
+        self.parser.add_argument("--sigma", dest='model_args.sigma', type=float, default=0.1,
+                                 help="Standard deviation of the noise to use.")
 
         # directories
         self.parser.add_argument("--name", dest='logger_args.name',

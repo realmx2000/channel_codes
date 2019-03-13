@@ -3,7 +3,7 @@ import copy
 import json
 import pathlib
 import numpy as np
-from dataset import InputDataloader, PowerConstraint
+from dataset import InputDataloader, PowerConstraint, get_AWGN, AWGN_modelfree
 from logger import TrainLogger
 from args import TrainArgParser
 from models import AutoEncoder, get_scheduler
@@ -39,7 +39,9 @@ def train(args):
 
     power_constraint = PowerConstraint()
     possible_inputs = get_md_set(model_args.md_len)
-    model = AutoEncoder(model_args, data_args, power_constraint, possible_inputs)
+    #channel = get_AWGN(data_args.SNR)
+    channel = AWGN_modelfree(data_args.batch_size, data_args.SNR)
+    model = AutoEncoder(model_args, data_args, power_constraint, channel, possible_inputs)
     enc_scheduler = get_scheduler(model_args.scheduler, model_args.decay, model_args.patience)
     dec_scheduler = get_scheduler(model_args.scheduler, model_args.decay, model_args.patience)
     
