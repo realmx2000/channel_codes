@@ -4,11 +4,48 @@ import tensorflow.keras as K
 from tensorflow.keras.layers import Layer
 # from tensorflow.keras.layers.normalization import BatchNormalization
 
+def get_channel(name, modelfree, data_args):
+    if not modelfree:
+        if name == "AWGN":
+            return get_AWGN(data_args.SNR)
+        else:
+            raise Exception("Invalid channel specified.")
+    else:
+        if name == "AWGN":
+            return AWGN_modelfree(data_args.batch_size, data_args.SNR)
+        elif name == "BSC":
+            return BSC(data_args.batch_size, data_args.epsilon)
+        elif name == "BEC":
+            return BEC(data_args.batch_size, data_args.epsilon)
+        else:
+            raise Exception("Invalid channel specified.")
+
 def get_AWGN(snr):
     std = np.sqrt(1. / snr)
     return K.layers.GaussianNoise(std)
 
-class AWGN_modelfree(Layer):
+class Modelfree_Channel(Layer):
+    def __init__(self):
+        super().__init__()
+
+    def build(self, input_shape):
+        pass
+
+    def identity_grad(self, op, grad):
+        return grad
+
+    def apply_channel(self, inp):
+        pass
+
+    def call(self, inp):
+        rnd_name = 'PyFuncGrad' + str(np.random.randint(0, 1E+8))
+
+        tf.RegisterGradient(rnd_name)(self.identity_grad)  # see _MySquareGrad for grad example
+        g = tf.get_default_graph()
+        with g.gradient_override_map({"PyFunc": rnd_name}):
+            return tf.py_func(self.apply_channel, [inp], [tf.float32], stateful=True, name="Channel")
+
+class AWGN_modelfree(Modelfree_Channel):
     def __init__(self, batch_size, snr):
         super().__init__()
         self.std = np.sqrt(1. / snr)
@@ -18,20 +55,50 @@ class AWGN_modelfree(Layer):
         self.shape = input_shape.as_list()
         self.shape[0] = self.batch_size
 
-    def add_noise(self, inp):
+    def apply_channel(self, inp):
         noise = self.std * np.random.standard_normal(self.shape)
         return (inp + noise).astype(np.float32)
 
-    def identity_grad(self, op, grad):
-        return grad
+class Discrete_noiseless(Modelfree_Channel):
+    def discretize(self, inp):
+        return np.round(np.clip(inp, 0, 1)).astype(np.float32)
 
-    def call(self, inp):
-        rnd_name = 'PyFuncGrad' + str(np.random.randint(0, 1E+8))
+    def apply_channel(self, inp):
+        return self.discretize(inp)
 
-        tf.RegisterGradient(rnd_name)(self.identity_grad)  # see _MySquareGrad for grad example
-        g = tf.get_default_graph()
-        with g.gradient_override_map({"PyFunc": rnd_name}):
-            return tf.py_func(self.add_noise, [inp], [tf.float32], stateful=True, name="Noise")
+class BSC(Discrete_noiseless):
+    def __init__(self, batch_size, eps):
+        super().__init__()
+        self.eps = eps
+        self.batch_size = batch_size
+
+    def build(self, input_shape):
+        self.shape = input_shape.as_list()
+        self.shape[0] = self.batch_size
+
+    def apply_channel(self, inp):
+        inp_d = self.discretize(inp)
+        noise = np.random.random_sample(self.shape)
+        noise = (noise < self.eps)
+        return np.mod(inp_d + noise, 2)
+
+class BEC(Discrete_noiseless):
+    def __init__(self, batch_size, eps):
+        super().__init__()
+        self.eps = eps
+        self.batch_size = batch_size
+
+    def build(self, input_shape):
+        self.shape = input_shape.as_list()
+        self.shape[0] = self.batch_size
+
+    def apply_channel(self, inp):
+        inp_d = self.discretize(inp)
+        noise = np.random.random_sample(self.shape)
+        noise = (noise < self.eps)
+        # -1 indicates erasure.
+        inp_d[noise] = -1
+        return inp_d
 
 class PowerConstraint(Layer):
     def __init__(self, **kwargs):

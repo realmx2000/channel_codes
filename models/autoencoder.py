@@ -15,7 +15,7 @@ class AutoEncoder:
             self.Pi = Pi(data_args.batch_size, model_args.sigma)
 
         self.compile_models(model_args.loss, opt1, opt2, data_args.batch_size, data_args.block_length,
-                            model_args.enc_size, model_args.dec_size, model_args.num_layers, data_args.rate,
+                            model_args.enc_size, model_args.dec_size, model_args.num_layers, data_args.redundancy,
                             model_args.gpu, power_constraint, channel, model_args.md_reg, possible_inputs)
 
     def get_AWGN(self, snr):
@@ -23,7 +23,7 @@ class AutoEncoder:
         return GaussianNoise(std)
 
 
-    def get_encoder(self, block_length, enc_size, num_layers, rate, gpu):
+    def get_encoder(self, block_length, enc_size, num_layers, redundancy, gpu):
         inp = keras.layers.Input((None, 1))
         if gpu:
             out = keras.layers.Bidirectional(keras.layers.CuDNNGRU(enc_size, return_sequences=True))(inp)
@@ -34,13 +34,13 @@ class AutoEncoder:
             for _ in range(num_layers - 1):
                 out = keras.layers.Bidirectional(keras.layers.GRU(enc_size, return_sequences=True))(out)
 
-        encodings = keras.layers.TimeDistributed(keras.layers.Dense(int(1 / rate)))(out)
+        encodings = keras.layers.TimeDistributed(keras.layers.Dense(redundancy))(out)
         model = keras.Model(inp, encodings)
         return model
 
 
-    def get_decoder(self, block_length, dec_size, num_layers, rate, gpu):
-        encodings = keras.layers.Input((None, int(1 / rate)))
+    def get_decoder(self, block_length, dec_size, num_layers, redundancy, gpu):
+        encodings = keras.layers.Input((None, redundancy))
         if gpu:
             out = keras.layers.Bidirectional(keras.layers.CuDNNGRU(dec_size, return_sequences=True))(encodings)
             for _ in range(num_layers - 1):
@@ -56,9 +56,9 @@ class AutoEncoder:
 
 
     def compile_models(self, loss, opt1, opt2, batch_size, block_length, enc_size, dec_size, num_layers,
-                       rate, gpu, power_constraint, channel, reg, poss_inputs):
-        encoder = self.get_encoder(block_length, enc_size, num_layers, rate, gpu)
-        decoder = self.get_decoder(block_length, dec_size, num_layers, rate, gpu)
+                       redundancy, gpu, power_constraint, channel, reg, poss_inputs):
+        encoder = self.get_encoder(block_length, enc_size, num_layers, redundancy, gpu)
+        decoder = self.get_decoder(block_length, dec_size, num_layers, redundancy, gpu)
 
         inp = keras.layers.Input((block_length, 1))
         encodings = encoder(inp)

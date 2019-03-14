@@ -23,10 +23,13 @@ class BaseArgParser(object):
                                  type=str, default='experiments/')
 
         # data args
+        self.parser.add_argument("--channel", dest='data_args.channel', type=str, choices=['AWGN', 'BSC', 'BEC'])
         self.parser.add_argument("--SNR", dest='data_args.SNR',
-                                 default=5, type=float, help="Channel SNR.")
-        self.parser.add_argument("--rate", dest='data_args.rate',
-                                 default=0.5, type=float, help="Communication rate")
+                                 default=5, type=float, help="Channel SNR (for continuous channels).")
+        self.parser.add_argument("--epsilon", dest='data_args.epsilon', type=float, default=0.05,
+                                 help="Channel error probability (for discrete channels).")
+        self.parser.add_argument("--redundancy", dest='data_args.redundancy',
+                                 default=2, type=int, help="Inverse of the rate.")
         self.parser.add_argument("--batch_size", dest='data_args.batch_size',
                                  default=1000, type=int, help="Batch size.")
         self.parser.add_argument("--block_length", dest='data_args.block_length',

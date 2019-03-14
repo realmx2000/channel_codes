@@ -3,7 +3,7 @@ import copy
 import json
 import pathlib
 import numpy as np
-from dataset import InputDataloader, PowerConstraint, get_AWGN, AWGN_modelfree
+from dataset import InputDataloader, PowerConstraint, get_channel
 from logger import TrainLogger
 from args import TrainArgParser
 from models import AutoEncoder, get_scheduler
@@ -40,8 +40,8 @@ def train(args):
 
     power_constraint = PowerConstraint()
     possible_inputs = get_md_set(model_args.md_len)
-    #channel = get_AWGN(data_args.SNR)
-    channel = AWGN_modelfree(data_args.batch_size, data_args.SNR)
+    channel = get_channel(data_args.channel, model_args.modelfree, data_args)
+
     model = AutoEncoder(model_args, data_args, power_constraint, channel, possible_inputs)
     enc_scheduler = get_scheduler(model_args.scheduler, model_args.decay, model_args.patience)
     dec_scheduler = get_scheduler(model_args.scheduler, model_args.decay, model_args.patience)
@@ -80,8 +80,6 @@ def train(args):
                     logger.end_iter()
             logger.end_epoch(None)
 
-            # Should these be joint or separate?
-            # TODO: debug this part
             enc_scheduler.on_epoch_end(logger.epoch, logs=metrics)
             dec_scheduler.on_epoch_end(logger.epoch, logs=metrics)
 
