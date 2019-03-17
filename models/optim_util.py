@@ -78,14 +78,16 @@ def pi(sigma, inp):
         return tf.py_func(add_noise, [inp], [tf.float32], stateful=True, name="Noise")
 
 class Pi(Layer):
-    def __init__(self, batch_size, sigma):
+    def __init__(self, batch_size, block_length, sigma):
         super().__init__()
         self.std = sigma
         self.batch_size = batch_size
+        self.block_length = block_length
 
     def build(self, input_shape):
         self.shape = input_shape.as_list()
         self.shape[0] = self.batch_size
+        self.shape[1] = self.block_length
 
     def log_gradient(self, op, grad):
         inp1 = op.inputs[0]

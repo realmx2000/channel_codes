@@ -12,11 +12,11 @@ def get_channel(name, modelfree, data_args):
             raise Exception("Invalid channel specified.")
     else:
         if name == "AWGN":
-            return AWGN_modelfree(data_args.batch_size, data_args.SNR)
+            return AWGN_modelfree(data_args.batch_size, data_args.block_length, data_args.SNR)
         elif name == "BSC":
-            return BSC(data_args.batch_size, data_args.epsilon)
+            return BSC(data_args.batch_size, data_args.block_length, data_args.epsilon)
         elif name == "BEC":
-            return BEC(data_args.batch_size, data_args.epsilon)
+            return BEC(data_args.batch_size, data_args.block_length, data_args.epsilon)
         else:
             raise Exception("Invalid channel specified.")
 
@@ -25,11 +25,15 @@ def get_AWGN(snr):
     return K.layers.GaussianNoise(std)
 
 class Modelfree_Channel(Layer):
-    def __init__(self):
+    def __init__(self, batch_size, block_length):
         super().__init__()
+        self.batch_size = batch_size
+        self.block_length = block_length
 
     def build(self, input_shape):
-        pass
+        self.shape = input_shape.as_list()
+        self.shape[0] = self.batch_size
+        self.shape[1] = self.block_length
 
     def identity_grad(self, op, grad):
         return grad
@@ -46,20 +50,19 @@ class Modelfree_Channel(Layer):
             return tf.py_func(self.apply_channel, [inp], [tf.float32], stateful=True, name="Channel")
 
 class AWGN_modelfree(Modelfree_Channel):
-    def __init__(self, batch_size, snr):
-        super().__init__()
+    def __init__(self, batch_size, block_length, snr):
+        super().__init__(batch_size, block_length)
         self.std = np.sqrt(1. / snr)
-        self.batch_size = batch_size
-
-    def build(self, input_shape):
-        self.shape = input_shape.as_list()
-        self.shape[0] = self.batch_size
 
     def apply_channel(self, inp):
         noise = self.std * np.random.standard_normal(self.shape)
         return (inp + noise).astype(np.float32)
 
 class Discrete_noiseless(Modelfree_Channel):
+    def __init__(self, batch_size, block_length, eps):
+        super().__init__(batch_size, block_length)
+        self.eps = eps
+
     def discretize(self, inp):
         return np.round(np.clip(inp, 0, 1)).astype(np.float32)
 
@@ -67,15 +70,6 @@ class Discrete_noiseless(Modelfree_Channel):
         return self.discretize(inp)
 
 class BSC(Discrete_noiseless):
-    def __init__(self, batch_size, eps):
-        super().__init__()
-        self.eps = eps
-        self.batch_size = batch_size
-
-    def build(self, input_shape):
-        self.shape = input_shape.as_list()
-        self.shape[0] = self.batch_size
-
     def apply_channel(self, inp):
         inp_d = self.discretize(inp)
         noise = np.random.random_sample(self.shape)
@@ -83,15 +77,6 @@ class BSC(Discrete_noiseless):
         return np.mod(inp_d + noise, 2)
 
 class BEC(Discrete_noiseless):
-    def __init__(self, batch_size, eps):
-        super().__init__()
-        self.eps = eps
-        self.batch_size = batch_size
-
-    def build(self, input_shape):
-        self.shape = input_shape.as_list()
-        self.shape[0] = self.batch_size
-
     def apply_channel(self, inp):
         inp_d = self.discretize(inp)
         noise = np.random.random_sample(self.shape)

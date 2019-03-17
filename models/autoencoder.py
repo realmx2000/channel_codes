@@ -12,10 +12,10 @@ class AutoEncoder:
         self.modelfree = False
         if model_args.modelfree:
             self.modelfree = True
-            self.Pi = Pi(data_args.batch_size, model_args.sigma)
+            self.Pi = Pi(data_args.batch_size, data_args.block_length, model_args.sigma)
 
-        self.compile_models(model_args.loss, opt1, opt2, data_args.batch_size, data_args.block_length,
-                            model_args.enc_size, model_args.dec_size, model_args.num_layers, data_args.redundancy,
+        self.compile_models(model_args.loss, opt1, opt2, data_args.batch_size, model_args.enc_size,
+                            model_args.dec_size, model_args.num_layers, data_args.redundancy,
                             model_args.gpu, power_constraint, channel, model_args.md_reg, possible_inputs)
 
     def get_AWGN(self, snr):
@@ -23,7 +23,7 @@ class AutoEncoder:
         return GaussianNoise(std)
 
 
-    def get_encoder(self, block_length, enc_size, num_layers, redundancy, gpu):
+    def get_encoder(self, enc_size, num_layers, redundancy, gpu):
         inp = keras.layers.Input((None, 1))
         if gpu:
             out = keras.layers.Bidirectional(keras.layers.CuDNNGRU(enc_size, return_sequences=True))(inp)
@@ -39,7 +39,7 @@ class AutoEncoder:
         return model
 
 
-    def get_decoder(self, block_length, dec_size, num_layers, redundancy, gpu):
+    def get_decoder(self, dec_size, num_layers, redundancy, gpu):
         encodings = keras.layers.Input((None, redundancy))
         if gpu:
             out = keras.layers.Bidirectional(keras.layers.CuDNNGRU(dec_size, return_sequences=True))(encodings)
@@ -55,12 +55,12 @@ class AutoEncoder:
         return model
 
 
-    def compile_models(self, loss, opt1, opt2, batch_size, block_length, enc_size, dec_size, num_layers,
+    def compile_models(self, loss, opt1, opt2, batch_size, enc_size, dec_size, num_layers,
                        redundancy, gpu, power_constraint, channel, reg, poss_inputs):
-        encoder = self.get_encoder(block_length, enc_size, num_layers, redundancy, gpu)
-        decoder = self.get_decoder(block_length, dec_size, num_layers, redundancy, gpu)
+        encoder = self.get_encoder(enc_size, num_layers, redundancy, gpu)
+        decoder = self.get_decoder(dec_size, num_layers, redundancy, gpu)
 
-        inp = keras.layers.Input((block_length, 1))
+        inp = keras.layers.Input((None, 1))
         encodings = encoder(inp)
         constrained = power_constraint(encodings)
         constrained.set_shape(encodings.get_shape())
