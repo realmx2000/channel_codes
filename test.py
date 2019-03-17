@@ -38,8 +38,26 @@ def test(args):
 
     power_constraint = PowerConstraint()
     possible_inputs = get_md_set(model_args.md_len)
-    channel = get_channel(data_args.channel, model_args.modelfree, data_args)
-    model = AutoEncoder(model_args, data_args, power_constraint, channel, possible_inputs)
+
+    data_args.batch_size = 1000
+    data_args.batches_per_epoch = 1000
+    dataset_size = data_args.batch_size * data_args.batches_per_epoch
+    loader = InputDataloader(data_args.batch_size, data_args.block_length, dataset_size)
+    loader = loader.example_generator()
+
+    SNRs = [-1, 0, 1, 2, 3, 4]
+
+    for SNR in SNRs:
+        data_args.SNR = SNR
+        print(data_args.channel)
+        print(model_args.modelfree)
+        channel = get_channel(data_args.channel, model_args.modelfree, data_args)
+        model = AutoEncoder(model_args, data_args, power_constraint, channel, possible_inputs)
+        saver.load(model)
+        for step in range(data_args.batches_per_epoch):
+            msg = next(loader)
+            metrics = model.trainable_encoder.test_on_batch(msg, msg)
+            print(metrics)
 
     saver.load(model)
 
