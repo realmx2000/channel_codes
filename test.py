@@ -1,5 +1,5 @@
 from args import TestArgParser
-from dataset import InputDataloader, PowerConstraint
+from dataset import InputDataloader, PowerConstraint, get_channel
 from models import AutoEncoder, get_scheduler
 from models.optim_util import get_possible_inputs
 from saver import ModelSaver
@@ -38,7 +38,8 @@ def test(args):
 
     power_constraint = PowerConstraint()
     possible_inputs = get_md_set(model_args.md_len)
-    model = AutoEncoder(model_args, data_args, power_constraint, possible_inputs)
+    channel = get_channel(data_args.channel, model_args.modelfree, data_args)
+    model = AutoEncoder(model_args, data_args, power_constraint, channel, possible_inputs)
 
     saver.load(model)
 
