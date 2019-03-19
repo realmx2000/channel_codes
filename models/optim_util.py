@@ -18,6 +18,8 @@ def get_optimizer(optimizer, lr, scheduler, decay, momentum=0):
 def get_scheduler(scheduler, decay, patience):
     if scheduler == 'plateau':
         return keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=decay, patience=patience, cooldown=1)
+    elif scheduler == 'step':
+        pass
     else:
         print("Unsupported scheduler used.")
 
