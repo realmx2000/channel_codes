@@ -17,18 +17,20 @@ if __name__ == '__main__':
     optimizer_space = ['adam', 'nesterov', 'sgd']
     loss_space = ['mse', 'bce']
     block_len_space = [50, 100, 200]
+    batch_size_space = [500, 1000, 2000]
 
     # fixed
-    md_len = 2
+    md_len = 7
     model_free = True
     channel = "BSC"
-    redundancy = 4
+    redundancy = 3
     epsilon = .1
 
     for i in range(number_samples):
         print(f"Training Random Model {i}")
 
         # sample
+        batch_size = random.choice(batch_size_space)
         lr = random.choice(lr_space)
         sigma = random.choice(sigma_space)
         lr_scheduler = random.choice(lr_scheduler_space)
@@ -53,4 +55,16 @@ if __name__ == '__main__':
                          "--modelfree",
                          "--channel", channel,
                          "--redundancy", str(redundancy),
-                         "epsilon", str(epsilon)])
+                         "--epsilon", str(epsilon),
+                         "--batch_size", str(batch_size),
+                         "--lr", str(lr),
+                         "--sigma", str(sigma),
+                         "--lr_scheduler", lr_scheduler,
+                         "--train_ratio", str(train_ratio),
+                         "--optimizer", str(optimizer),
+                         "--loss", loss,
+                         "--block_len", str(block_len),
+                         "--enc_layers", str(enc_layers),
+                         "--dec_layers", str(dec_layers),
+                         "--encoder_size", str(encoder_size),
+                         "--decoder_size", str(decoder_size)])
