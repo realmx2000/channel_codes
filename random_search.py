@@ -1,21 +1,18 @@
 import random
 import subprocess
+import numpy as np
+import string
 
 if __name__ == '__main__':
     
     number_samples = 10
     
     # space
-    lr_space = [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
-    encoder_size_space = [25, 50, 100, 200, 400]
-    decoder_size_space = [25, 50, 100, 200, 400]
     layers_space = [1,2]
     lr_scheduler_space = ['plateau', 'step']
     train_ratio_space = [1, 3, 5, 7]
     optimizer_space = ['adam', 'nesterov', 'sgd']
     loss_space = ['mse', 'bce']
-    block_len_space = [50, 100, 200]
-    batch_size_space = [500, 1000, 2000]
 
     # fixed
     md_len = 7
@@ -28,19 +25,20 @@ if __name__ == '__main__':
         print(f"Training Random Model {i}")
 
         # sample
-        batch_size = random.choice(batch_size_space)
-        lr = random.choice(lr_space)
-        sigma = 0.6 * np.random_sample() + 0.1
+        batch_size = round(2 ** (3 * np.random.random_sample() + 8))
+        lr = np.exp(4 * np.random.random_sample() - 5)
+        sigma = 0.45 * np.random.random_sample() + 0.1
         lr_scheduler = random.choice(lr_scheduler_space)
         train_ratio = random.choice(train_ratio_space)
         optimizer = random.choice(optimizer_space)
         loss = random.choice(loss_space)
-        block_len = random.choice(block_len_space)
+        block_len = round(2 ** (3 * np.random.random_sample() + 5))
         layers = random.choice(layers_space)
-        encoder_size = 375 * np.random_sample() + 25
-        decoder_size = (400 - encoder_size) * np.random_sample()) + encoder_size
+        decay_step = 0.45 * np.random.random_sample() + .05
+        encoder_size = round(375 * np.random.random_sample() + 25)
+        decoder_size = round((400 - encoder_size) * np.random.random_sample() + encoder_size)
 
-        name = f"random_model_{i}"
+        name = "random_model_" + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
 
         command = ["python", "train.py",
                          "--name", name,
@@ -59,6 +57,7 @@ if __name__ == '__main__':
                          "--block_len", str(block_len),
                          "--layers", str(layers),
                          "--enc_size", str(encoder_size),
-                         "--dec_size", str(decoder_size)]
+                         "--dec_size", str(decoder_size),
+                         "--decay_step", str(decay_step)]
         print(command)
         subprocess.call(command)
