@@ -112,7 +112,7 @@ class TrainLogger(object):
         else:
             self.notImprovedCounter += 1
 
-        return last_epoch_loss
+        return isBetter
 
     def is_finished_training(self):
         """Return True if finished training, otherwise return False."""
