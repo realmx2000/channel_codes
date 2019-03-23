@@ -8,11 +8,15 @@ def get_channel(name, modelfree, data_args):
     if not modelfree:
         if name == "AWGN":
             return get_AWGN(data_args.SNR)
+        elif name == "RBF":
+            return RBF(data_args.batch_size, data_args.block_length, data_args.scale)
         else:
             raise Exception("Invalid channel specified.")
     else:
         if name == "AWGN":
             return AWGN_modelfree(data_args.batch_size, data_args.block_length, data_args.SNR)
+        if name == 'RBF':
+            return RBF(data_args.batch_size, data_args.block_length, data_args.scale)
         elif name == "BSC":
             return BSC(data_args.batch_size, data_args.block_length, data_args.epsilon)
         elif name == "BEC":
@@ -24,7 +28,7 @@ def get_AWGN(snr):
     std = np.sqrt(1. / snr)
     return K.layers.GaussianNoise(std)
 
-class Modelfree_Channel(Layer):
+class Channel(Layer):
     def __init__(self, batch_size, block_length):
         super().__init__()
         self.batch_size = batch_size
@@ -49,7 +53,17 @@ class Modelfree_Channel(Layer):
         with g.gradient_override_map({"PyFunc": rnd_name}):
             return tf.py_func(self.apply_channel, [inp], [tf.float32], stateful=True, name="Channel")
 
-class AWGN_modelfree(Modelfree_Channel):
+class RBF(Channel):
+    def __init__(self, batch_size, block_length, sigma):
+        super().__init__(batch_size, block_length)
+        self.sigma = sigma
+
+    def apply_channel(self, inp):
+        var = np.random.rayleigh(self.sigma)
+        noise = np.sqrt(var) * np.random.standard_normal(self.shape)
+        return (inp + noise).astype(np.float32)
+
+class AWGN_modelfree(Channel):
     def __init__(self, batch_size, block_length, snr):
         super().__init__(batch_size, block_length)
         self.std = np.sqrt(1. / snr)
@@ -58,7 +72,7 @@ class AWGN_modelfree(Modelfree_Channel):
         noise = self.std * np.random.standard_normal(self.shape)
         return (inp + noise).astype(np.float32)
 
-class Discrete_noiseless(Modelfree_Channel):
+class Discrete_noiseless(Channel):
     def __init__(self, batch_size, block_length, eps):
         super().__init__(batch_size, block_length)
         self.eps = eps

@@ -15,6 +15,8 @@ class BaseArgParser(object):
                                  help="Use model free training.")
         self.parser.add_argument("--sigma", dest='model_args.sigma', type=float, default=0.1,
                                  help="Standard deviation of the noise to use.")
+        self.parser.add_argument("--sigma_decay", dest='model_args.sigma_decay', type=float, default=1.0,
+                                 help="Amount to decay sigma for each epoch.")
 
         # directories
         self.parser.add_argument("--name", dest='logger_args.name',
@@ -23,9 +25,11 @@ class BaseArgParser(object):
                                  type=str, default='experiments/')
 
         # data args
-        self.parser.add_argument("--channel", dest='data_args.channel', type=str, choices=['AWGN', 'BSC', 'BEC'])
+        self.parser.add_argument("--channel", dest='data_args.channel', type=str, choices=['AWGN', 'RBF', 'BSC', 'BEC'])
         self.parser.add_argument("--SNR", dest='data_args.SNR',
                                  default=5, type=float, help="Channel SNR (for continuous channels).")
+        self.parser.add_argument("--scale", dest='data_args.scale', default=0.2, type=float, help="Scale for the"
+                                 "rayleigh distribution (RBF channel only).")
         self.parser.add_argument("--epsilon", dest='data_args.epsilon', type=float, default=0.05,
                                  help="Channel error probability (for discrete channels).")
         self.parser.add_argument("--redundancy", dest='data_args.redundancy',

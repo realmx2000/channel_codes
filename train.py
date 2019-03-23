@@ -3,6 +3,7 @@ import copy
 import json
 import pathlib
 import numpy as np
+import tensorflow.keras.backend as K
 from dataset import InputDataloader, PowerConstraint, get_channel
 from logger import TrainLogger
 from args import TrainArgParser
@@ -80,13 +81,15 @@ def train(args):
                     logger.end_iter()
             logger.end_epoch(None)
 
+            model.Pi.std *= model_args.sigma_decay
+
             enc_scheduler.on_epoch_end(logger.epoch, logs=metrics)
             dec_scheduler.on_epoch_end(logger.epoch, logs=metrics)
 
             if logger.has_improved():
                 saver.save(model)
 
-            if logger.notImprovedCounter >= 5:
+            if logger.notImprovedCounter >= 7:
                 break
         except StopIteration:
             break
