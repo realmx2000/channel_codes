@@ -39,6 +39,8 @@ def train(args):
     data_args = args.data_args
     logger_args = args.logger_args
 
+    print(f"Training {logger_args.name}")
+
     power_constraint = PowerConstraint()
     possible_inputs = get_md_set(model_args.md_len)
     channel = get_channel(data_args.channel, model_args.modelfree, data_args)
