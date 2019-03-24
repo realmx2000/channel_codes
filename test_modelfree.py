@@ -1,4 +1,3 @@
-from args import TestArgParser
 from dataset import InputDataloader, PowerConstraint, get_channel
 from models import AutoEncoder, get_scheduler
 from models.optim_util import get_possible_inputs
@@ -10,6 +9,17 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+
+
+def get_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--model_dict_path",
+        help="model dictionary path"
+    )
+
+    return parser.parse_args()
 
 
 def load_args(path):
@@ -31,35 +41,46 @@ def get_md_set(md_len):
     return possible_inputs
 
 
+def load_model_dict(path):
+    with open(path) as f:
+        model_dict = json.load(f)
+    return model_dict
+
 def test(args):
-    print(args.logger_args.save_dir)
 
-    model_args, data_args = load_args(args.logger_args.save_dir)
-    assert not model_args.modelfree, "Code only evaluates on model based models"
+    model_dict = load_model_dict(args.model_dict_path)
 
-    saver = ModelSaver(Path(args.logger_args.save_dir), None)
-
-    power_constraint = PowerConstraint()
-    possible_inputs = get_md_set(model_args.md_len)
-
-    # TODO: change to batch size and batch per epoch to 1000
-    data_args.batch_size = 100
-    data_args.batches_per_epoch = 10
-    dataset_size = data_args.batch_size * data_args.batches_per_epoch
-    loader = InputDataloader(data_args.batch_size, data_args.block_length, dataset_size)
-    loader = loader.example_generator()
-
-    SNRs = [.5, 1, 2, 3, 4]
     BER = []
     loss = []
+    noises = []
 
-    for SNR in SNRs:
-        print(f"Testing {SNR} SNR level")
-        data_args.SNR = SNR
+    for noise, save_dir in model_dict.keys():
+        model_args, data_args = load_args(save_dir)
+        assert model_args.modelfree, "Code only evaluates on model free"
+        
+        saver = ModelSaver(Path(args.logger_args.save_dir), None)
+        power_constraint = PowerConstraint()
+        possible_inputs = get_md_set(model_args.md_len)
+
+        # TODO: change to batch size and batch per epoch to 1000
+        data_args.batch_size = 100
+        data_args.batches_per_epoch = 100
+        dataset_size = data_args.batch_size * data_arsave_dir
+        loader = InputDataloader(data_args.batch_size, data_args.block_length, dataset_size)
+        loader = loader.example_generator()
+
+        if data_args.channel == "AWGN":
+            assert noise == data_args.SNR
+        else:
+            assert noise == data_args.epsilon
+
+        print(f"Testing {noise} noise level")
+
         accuracy = []
         losses = []
-        print(data_args.channel)
-        print(model_args.modelfree)
+
+        channel = get_channel(data_args.channel, model_args.modelfree, data_args)
+        model = AutoEncoder(model_args, data_args, power_constraint, channel, possible_inputs)
         channel = get_channel(data_args.channel, model_args.modelfree, data_args)
         model = AutoEncoder(model_args, data_args, power_constraint, channel, possible_inputs)
         saver.load(model)
@@ -72,16 +93,15 @@ def test(args):
         mean_BER = 1 - sum(accuracy) / len(accuracy)
         loss.append(mean_loss)
         BER.append(mean_BER)
+        noises.append(noise)
         print(f"mean BER: {mean_BER}")
         print(f"mean loss: {mean_loss}")
 
     # create plots for results
-    plt.plot(SNRs, BER)
+    plt.plot(noise, BER)
     plt.ylabel("BER")
-    plt.xlabel("SNR")
-    plt.yscale('log')
+    plt.xlabel("noise")
     plt.show()
 
 if __name__ == '__main__':
-    parser = TestArgParser()
-    test(parser.parse_args())
+    test(get_args())
