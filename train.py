@@ -24,6 +24,7 @@ def write_args(args):
                 for k2, v2 in args_dict[k].items():
                     if type(v2) is pathlib.PosixPath:
                         args_dict[k][k2] = v2.as_posix()
+        print(args_dict)
         json.dump(args_dict, fh, indent=4, sort_keys=True)
         fh.write('\n')
 
