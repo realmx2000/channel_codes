@@ -81,7 +81,8 @@ def train(args):
                     logger.end_iter()
             logger.end_epoch(None)
 
-            model.Pi.std *= model_args.sigma_decay
+            if model_args.modelfree:
+                model.Pi.std *= model_args.sigma_decay
 
             enc_scheduler.on_epoch_end(logger.epoch, logs=metrics)
             dec_scheduler.on_epoch_end(logger.epoch, logs=metrics)
