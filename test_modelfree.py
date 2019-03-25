@@ -48,31 +48,31 @@ def load_model_dict(path):
 
 def test(args):
 
-    model_dict = load_model_dict(args.model_dict_path)
+    model_dict = load_model_dict(Path(args.model_dict_path))
 
     BER = []
     loss = []
     noises = []
 
-    for noise, save_dir in model_dict.keys():
-        model_args, data_args = load_args(save_dir)
+    for noise, save_dir in model_dict.items():
+        model_args, data_args = load_args(Path(save_dir))
         assert model_args.modelfree, "Code only evaluates on model free"
         
-        saver = ModelSaver(Path(args.logger_args.save_dir), None)
+        saver = ModelSaver(Path(save_dir), None)
         power_constraint = PowerConstraint()
         possible_inputs = get_md_set(model_args.md_len)
 
         # TODO: change to batch size and batch per epoch to 1000
         data_args.batch_size = 100
         data_args.batches_per_epoch = 100
-        dataset_size = data_args.batch_size * data_arsave_dir
+        dataset_size = data_args.batch_size * data_args.batches_per_epoch
         loader = InputDataloader(data_args.batch_size, data_args.block_length, dataset_size)
         loader = loader.example_generator()
 
         if data_args.channel == "AWGN":
-            assert noise == data_args.SNR
+            assert float(noise) == data_args.SNR
         else:
-            assert noise == data_args.epsilon
+            assert float(noise) == data_args.epsilon
 
         print(f"Testing {noise} noise level")
 
@@ -98,10 +98,13 @@ def test(args):
         print(f"mean loss: {mean_loss}")
 
     # create plots for results
-    plt.plot(noise, BER)
+    plt.plot(noises, BER, 'b--')
+    plt.plot(noises, BER, 'bx')
     plt.ylabel("BER")
     plt.xlabel("noise")
-    plt.show()
+    plt.yscale('log')
+    plt.ylim([1e-6, 1.0])
+    plt.savefig("figures/figure.png")
 
 if __name__ == '__main__':
     test(get_args())

@@ -54,8 +54,8 @@ def test(args):
     possible_inputs = get_md_set(model_args.md_len)
 
     # TODO: change to batch size and batch per epoch to 1000
-    data_args.batch_size = 100
-    data_args.batches_per_epoch = 10
+    data_args.batch_size = 5000
+    data_args.batches_per_epoch = 1000
     dataset_size = data_args.batch_size * data_args.batches_per_epoch
     loader = InputDataloader(data_args.batch_size, data_args.block_length, dataset_size)
     loader = loader.example_generator()
@@ -91,6 +91,7 @@ def test(args):
     plt.ylabel("BER")
     plt.xlabel("SNR")
     plt.yscale('log')
+    plt.savefig('figures/AWGN_modelaware.png')
     plt.show()
 
 if __name__ == '__main__':
