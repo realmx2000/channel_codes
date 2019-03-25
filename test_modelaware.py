@@ -12,6 +12,17 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 
+def get_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--save_dir",
+        help="model save path"
+    )
+
+    return parser.parse_args()
+
+
 def load_args(path):
     args_dir = path / "args.json"
     with open(args_dir) as f:
@@ -32,12 +43,12 @@ def get_md_set(md_len):
 
 
 def test(args):
-    print(args.logger_args.save_dir)
+    print(args.save_dir)
 
-    model_args, data_args = load_args(args.logger_args.save_dir)
+    model_args, data_args = load_args(Path(args.save_dir))
     assert not model_args.modelfree, "Code only evaluates on model based models"
 
-    saver = ModelSaver(Path(args.logger_args.save_dir), None)
+    saver = ModelSaver(Path(args.save_dir), None)
 
     power_constraint = PowerConstraint()
     possible_inputs = get_md_set(model_args.md_len)
@@ -83,5 +94,4 @@ def test(args):
     plt.show()
 
 if __name__ == '__main__':
-    parser = TestArgParser()
-    test(parser.parse_args())
+    test(get_args())
